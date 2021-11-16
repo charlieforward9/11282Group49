@@ -116,12 +116,16 @@ button {
   left: 1210px;
 }
 
-ul {
+div {
   list-style-type: disclosure-closed;
   color: #fc6500;
-  font-size: 2em;
+}
+
+p {
+  font-size: 1.5em;
 }
 
 li {
-  margin-bottom: 10px;
+  margin-bottom: 50px;
+  font-size: 1.5em;
 }
