@@ -6,6 +6,6 @@
  4. Once your inside the folder, run **npm install** to install all the dependencies required to run the project
  5. Run **npm start** start after the dependencies have been installed
  6. Type **localhost:4000** in your browser after you see the message "Server is up on port 4000" in the terminal
- 7. On the login page, you can either login with the emai address: "a@a" and password "a" or you can register with your own email address and password and login 
+ 7. On the login page, you can either login with the email address: "a@a" and password "a" or you can register with your own email address and password and login 
 
 
