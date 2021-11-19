@@ -3,14 +3,18 @@
     <head>
         <title>Suggestions</title>
         <link rel="stylesheet" href="/css/styles.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     </head>
 
     <body>
         <div class="main-content">
             {{>header}}
-            <p>This is where your personalized suggestions will appear.</p>
+            <button class="btn", onclick="location.href='/';"><i class="fa fa-home"></i> Home</button>
+            <div id="sug">
+                
+            </div>
         </div>
-
+        <script id="userSuggestions" userData={{userMongoDBData}} src="/js/suggestionPageList.js"></script>
         {{>footer}}
     </body>
 </html>

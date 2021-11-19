@@ -1,69 +1,119 @@
-var optionsWaterChart = {
-  series: [{
-    name: "Desktops",
-    data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
-}],
+//Get User Data
+const userDataString = document
+  .getElementById("userTrends")
+  .getAttribute("userData");
+const userData = JSON.parse(userDataString);
+
+function getTimeXAxis(data) {
+  var dateXAxis = [];
+  for (let i = 0; i < data.length; i++) {
+    const tempEntry = data[i];
+    const tempTime = tempEntry.DateCreated;
+    var tempDate = new Date(tempTime);
+    tempDate = tempDate.toLocaleDateString();
+    dateXAxis.push(tempDate);
+  }
+  return dateXAxis;
+}
+
+function getShowerLength(data) {
+  var lengths = [];
+  for (let i = 0; i < data.length; i++) {
+    const tempEntry = data[i];
+    const tempLength = tempEntry.ShowerLength;
+    lengths.push(parseInt(tempLength));
+  }
+  return lengths;
+}
+
+function getAir(data) {
+  var lengths = [];
+  for (let i = 0; i < data.length; i++) {
+    const tempEntry = data[i];
+    const tempLength = tempEntry.AirConditioningTemp;
+    lengths.push(parseInt(tempLength));
+  }
+  return lengths;
+}
+
+function getYesNo(data) {
+  var numYes = 0;
+  var numNo = 0;
+  var lengths = [];
+  for (let i = 0; i < data.length; i++) {
+    const tempEntry = data[i];
+    if (tempEntry.LEDLights === "Yes") {
+      numYes++;
+    } else {
+      numNo++;
+    }
+
+    if (tempEntry.NaturalLights === "Yes") {
+      numYes++;
+    } else {
+      numNo++;
+    }
+
+    if (tempEntry.TintUse === "Yes") {
+      numYes++;
+    } else {
+      numNo++;
+    }
+
+    if (tempEntry.SmartThermo === "Yes") {
+      numYes++;
+    } else {
+      numNo++;
+    }
+
+    if (tempEntry.SmartPlug === "Yes") {
+      numYes++;
+    } else {
+      numNo++;
+    }
+
+    if (tempEntry.WaterTemp === "Cold") {
+      numYes++;
+    } else {
+      numNo++;
+    }
+
+    if (tempEntry.SinkUsage === "Yes") {
+      numYes++;
+    } else {
+      numNo++;
+    }
+  }
+  lengths.push(numYes);
+  lengths.push(numNo);
+  return lengths;
+}
+
+function getEat(data) {
+  var lengths = [];
+  for (let i = 0; i < data.length; i++) {
+    const tempEntry = data[i];
+    const tempLength = tempEntry.NumEatingOut;
+    lengths.push(parseInt(tempLength));
+  }
+  return lengths;
+}
+
+//Construct the Graphs
+var optionsShowerLength = {
+  series: [
+    {
+      name: "Minutes",
+      data: getShowerLength(userData),
+    },
+  ],
   chart: {
-  height: 350,
-  type: 'line',
-  background: '#262D47',
-  foreColor: '#fff',
-  zoom: {
-    enabled: false
-  },
-  dropShadow: {
-    enabled: true,
-    opacity: 0.5,
-    blur: 5,
-    left: -7,
-    top: 22,
-  },
-},
-dataLabels: {
-  enabled: false
-},
-stroke: {
-  curve: 'straight'
-},
-title: {
-  text: 'Water Use Graph',
-  align: 'left'
-},
-grid: {
-  borderColor: '#aaa',
-},
-xaxis: {
-  categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
-  axisTicks: {
-    color: "#333"
-  },
-  axisBorder: {
-    color: "#333"
-  }
-},
-stroke: {
-  width: 5,
-  dashArray: 0,
-  colors: '#FCCF31',
-},
-  };
-
-  var waterChart = new ApexCharts(document.querySelector("#waterChart"), optionsWaterChart);
-  waterChart.render();
-
-
-  var optionsEatingOut = {
-    series: [{
-      name: "Desktops",
-      data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
-  }],
-    chart: {
     height: 350,
-    type: 'line',
-    background: '#262D47',
-    foreColor: '#fff',
+    type: "line",
+    background: "#262D47",
+    foreColor: "#fff",
     zoom: {
-      enabled: false
+      enabled: false,
     },
     dropShadow: {
       enabled: true,
@@ -74,49 +124,54 @@ stroke: {
     },
   },
   dataLabels: {
-    enabled: false
+    enabled: false,
   },
   stroke: {
-    curve: 'straight'
+    curve: "straight",
   },
   title: {
-    text: 'Eeating Out Graph',
-    align: 'left'
+    text: "Shower Length Graph",
+    align: "left",
   },
   grid: {
-    borderColor: '#aaa',
+    borderColor: "#aaa",
   },
   xaxis: {
-    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+    categories: getTimeXAxis(userData),
     axisTicks: {
-      color: "#333"
+      color: "#333",
     },
     axisBorder: {
-      color: "#333"
-    }
+      color: "#333",
+    },
   },
   stroke: {
     width: 5,
     dashArray: 0,
-    colors: '#FCCF31',
+    colors: "#FCCF31",
   },
-  };
+};
 
-  var eatingOutChart = new ApexCharts(document.querySelector("#eatingOutChart"), optionsEatingOut);
-  eatingOutChart.render();
+var showerChart = new ApexCharts(
+  document.querySelector("#showerChart"),
+  optionsShowerLength
+);
+showerChart.render();
 
-  var optionsAirConditioning = {
-    series: [{
-      name: "Desktops",
-      data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
-  }],
-    chart: {
+var optionsAir = {
+  series: [
+    {
+      name: "Temperature (F)",
+      data: getAir(userData),
+    },
+  ],
+  chart: {
     height: 350,
-    type: 'line',
-    background: '#262D47',
-    foreColor: '#fff',
+    type: "line",
+    background: "#262D47",
+    foreColor: "#fff",
     zoom: {
-      enabled: false
+      enabled: false,
     },
     dropShadow: {
       enabled: true,
@@ -127,148 +182,118 @@ stroke: {
     },
   },
   dataLabels: {
-    enabled: false
+    enabled: false,
   },
   stroke: {
-    curve: 'straight'
+    curve: "straight",
   },
   title: {
-    text: 'Air Conditioning Graph',
-    align: 'left'
+    text: "Air Conditioning Graph",
+    align: "left",
   },
   grid: {
-    borderColor: '#aaa',
+    borderColor: "#aaa",
   },
   xaxis: {
-    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+    categories: getTimeXAxis(userData),
     axisTicks: {
-      color: "#333"
+      color: "#333",
     },
     axisBorder: {
-      color: "#333"
-    }
+      color: "#333",
+    },
   },
   stroke: {
     width: 5,
     dashArray: 0,
-    colors: '#FCCF31',
+    colors: "#FCCF31",
   },
-  };
+};
 
-  var airConditioningChart = new ApexCharts(document.querySelector("#airConditioningChart"), optionsAirConditioning);
-  airConditioningChart.render();
+var airChart = new ApexCharts(document.querySelector("#airChart"), optionsAir);
+airChart.render();
 
-
-  var optionsHotOrCold = {
-    series: [{
-    name: 'Net Profit',
-    data: [44, 55, 57, 56, 61, 58, 63, 60, 66]
-  }, {
-    name: 'Revenue',
-    data: [76, 85, 101, 98, 87, 105, 91, 114, 94]
-  }, {
-    name: 'Free Cash Flow',
-    data: [35, 41, 36, 26, 45, 48, 52, 53, 41]
-  }],
-    chart: {
-    type: 'bar',
-    background: '#262D47',
-    foreColor: '#fff',
-    height: 350
-  },
-  plotOptions: {
-    bar: {
-      horizontal: false,
-      columnWidth: '55%',
-      endingShape: 'rounded'
+var optionsEat = {
+  series: [
+    {
+      name: "Num. Eating Out",
+      data: getEat(userData),
+    },
+  ],
+  chart: {
+    height: 350,
+    type: "line",
+    background: "#262D47",
+    foreColor: "#fff",
+    zoom: {
+      enabled: false,
+    },
+    dropShadow: {
+      enabled: true,
+      opacity: 0.5,
+      blur: 5,
+      left: -7,
+      top: 22,
     },
   },
   dataLabels: {
-    enabled: false
+    enabled: false,
   },
   stroke: {
-    show: true,
-    width: 2,
-    colors: ['transparent']
+    curve: "straight",
+  },
+  title: {
+    text: "Eating Out Graph",
+    align: "left",
+  },
+  grid: {
+    borderColor: "#aaa",
   },
   xaxis: {
-    categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-  },
-  yaxis: {
-    title: {
-      text: '$ (thousands)'
-    }
-  },
-  fill: {
-    opacity: 1
-  },
-  tooltip: {
-    y: {
-      formatter: function (val) {
-        return "$ " + val + " thousands"
-      }
-    }
-  }
-  };
-
-  var chartHotOrCold = new ApexCharts(document.querySelector("#hotOrColdWaterChart"), optionsHotOrCold);
-  chartHotOrCold.render();
-
-
-  var optionsMeatOrVeggie = {
-    series: [{
-    name: 'Net Profit',
-    data: [44, 55, 57, 56, 61, 58, 63, 60, 66]
-  }, {
-    name: 'Revenue',
-    data: [76, 85, 101, 98, 87, 105, 91, 114, 94]
-  }, {
-    name: 'Free Cash Flow',
-    data: [35, 41, 36, 26, 45, 48, 52, 53, 41]
-  }],
-    chart: {
-    type: 'bar',
-    background: '#262D47',
-    foreColor: '#fff',
-    height: 350
-  },
-  plotOptions: {
-    bar: {
-      horizontal: false,
-      columnWidth: '55%',
-      endingShape: 'rounded'
+    categories: getTimeXAxis(userData),
+    axisTicks: {
+      color: "#333",
+    },
+    axisBorder: {
+      color: "#333",
     },
   },
-  dataLabels: {
-    enabled: false
-  },
   stroke: {
-    show: true,
-    width: 2,
-    colors: ['transparent']
+    width: 5,
+    dashArray: 0,
+    colors: "#FCCF31",
   },
-  xaxis: {
-    categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+};
+
+var eatChart = new ApexCharts(document.querySelector("#eatChart"), optionsEat);
+eatChart.render();
+
+var optionsYesNo = {
+  series: getYesNo(userData),
+  chart: {
+    //width: 380,
+    type: "pie",
+    background: "#262D47",
+    foreColor: "#fff",
   },
-  yaxis: {
-    title: {
-      text: '$ (thousands)'
-    }
-  },
-  fill: {
-    opacity: 1
-  },
-  tooltip: {
-    y: {
-      formatter: function (val) {
-        return "$ " + val + " thousands"
-      }
-    }
-  }
-  };
+  labels: ["Positive Habits", "Negative Habits"],
+  responsive: [
+    {
+      breakpoint: 480,
+      options: {
+        chart: {
+          width: 200,
+        },
+        legend: {
+          position: "bottom",
+        },
+      },
+    },
+  ],
+};
 
-  var chartMeatOrVeggie = new ApexCharts(document.querySelector("#meatOrVeggieChart"), optionsMeatOrVeggie);
-  chartMeatOrVeggie.render();
-
-
-
+var yesNochart = new ApexCharts(
+  document.querySelector("#yesNoChart"),
+  optionsYesNo
+);
+yesNochart.render();

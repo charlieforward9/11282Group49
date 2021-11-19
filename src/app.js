@@ -6,38 +6,40 @@ if (process.env.NODE_ENV !== "production") {
 const path = require("path");
 const express = require("express");
 const hbs = require("hbs");
-const urlencodedParser = express.urlencoded({ extended: false });
+const bodyParser = require("body-parser");
+const urlencodedParser = bodyParser.urlencoded({ extended: false });
 const bcrypt = require("bcrypt");
 const passport = require("passport");
 const flash = require("express-flash");
 const session = require("express-session");
 const methodOverride = require("method-override");
+//New code
 const mongoose = require("mongoose");
-const initializePassport = require("./passport-config");
-const api = require("./api/index");
-const db = require("./db/connection");
-const userRouter = require("./routes/user-router");
+const localStrategy = require("passport-local").Strategy;
+const ObjectId = require("mongodb").ObjectId;
+const { MongoClient } = require("mongodb");
+const uri =
+  "mongodb+srv://smadsen:smadsen@userinformation.mgssl.mongodb.net/UserInformation?retryWrites=true&w=majority";
 
-const {
-  checkAuthenticated,
-  checkNotAuthenticated,
-} = require("./control/auth-control");
+const initializePassport = require("./passport-config");
+const { assert } = require("console");
+
+initializePassport(passport);
 
 const app = express();
 const port = process.env.PORT || 4000;
+
+//Connect to MongoDB
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+const dbName = "UserInformation";
 
 //Define path for Express config
 const publicDirectoryPath = path.join(__dirname, "../public");
 const viewsPath = path.join(__dirname, "../templates/views");
 const partialPath = path.join(__dirname, "../templates/partials");
-
-const users = [];
-
-initializePassport(
-  passport,
-  (email) => users.find((user) => user.email === email), //function for finding user based on email
-  (id) => users.find((user) => user.id === id)
-);
 
 //Setup handlebars engine and views location
 app.set("view engine", "hbs");
@@ -63,12 +65,15 @@ app.use(methodOverride("_method"));
 app.get("", checkAuthenticated, (req, res) => {
   res.render("homePage", {
     title: "Powerium",
+    logout: "Log Out",
   });
 });
 
 app.get("/login", checkNotAuthenticated, (req, res) => {
   res.render("login", {
     title: "Login",
+    logout: "",
+    error: req.flash("error"), //For error messages
   });
 });
 
@@ -88,24 +93,12 @@ app.post(
   }
 );
 
-// app.post('/login', urlencodedParser, (req, res) => {
-//     if(req.body.action == 'Login'){
-//         //check to make sure valid login credentials here...NEEDS TO BE CODED
-//         res.redirect('/');
-
-//     } else if(req.body.action == 'Register'){
-//         res.redirect('/register')
-//     }
-// })
-
-//What is this?? -Charlie
 app.get("/register", checkNotAuthenticated, (req, res) => {
   res.render("register", {
     title: "Register Account",
   });
 });
 
-//Stores the register page input in MongoDB database
 app.post(
   "/register",
   checkNotAuthenticated,
@@ -113,15 +106,26 @@ app.post(
   async (req, res) => {
     try {
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
-      const payload = {
-        username: req.body.username,
+
+      await client.connect();
+      console.log("Connected Correctly to server");
+
+      const db = client.db(dbName);
+      const col = db.collection("user-info");
+
+      let userInfo = {
+        name: req.body.name,
         email: req.body.email,
         password: hashedPassword,
       };
-      api.createUser(payload);
-      res.redirect("/login");
+
+      const p = await col.insertOne(userInfo);
     } catch {
       res.redirect("/register");
+    } finally {
+      await client.close();
+      console.log("Correctly closed client");
+      res.redirect("/login");
     }
   }
 );
@@ -129,52 +133,84 @@ app.post(
 app.get("/inputs", (req, res) => {
   res.render("inputs", {
     title: "Inputs",
+    logout: "Log Out",
   });
 });
 
-app.post("/inputs", urlencodedParser, (req, res) => {
-  console.log(req.body);
+app.post("/inputs", urlencodedParser, async (req, res) => {
+  try {
+    await client.connect();
+    console.log("Connected Correctly to server");
 
-  // test('Test For Valid Water Heater Temperature', () => {
-  //     expect(waterHeaterValid(req.body.waterHeaterTemp)).toBe(true);
-  // })
+    const db = client.db(dbName);
+    const col = db.collection("user-inputs");
 
-  // test('Test For Valid Shower Length Time', () => {
-  //     expect(showerLengthValid(req.body.showerLengthTime)).toBe(true);
-  // })
+    let userInputs = {
+      DateCreated: Date.now(),
+      UserId: req.user._id,
+      LEDLights: req.body.lightType,
+      NaturalLights: req.body.natType,
+      TintUse: req.body.tintUse,
+      SmartThermo: req.body.thermoType,
+      SmartPlug: req.body.plugType,
+      WaterTemp: req.body.waterHeaterName,
+      SinkUsage: req.body.sinkUsage,
+      ShowerLength: req.body.showerLengthName,
+      WaterTemp: req.body.waterTemp,
+      AirConditioningTemp: req.body.airConditioningName,
+      NumEatingOut: req.body.eatingOutName,
+    };
 
-  // test('Test For Valid Air Conditioning Temperature', () => {
-  //     expect(airConditioningValid(req.body.airConditioingTemp)).toBe(true);
-  // })
-
-  // test('Test For Valid Eating Out Number', () => {
-  //     expect(eatingOutValid(req.body.eatingOutNum)).toBe(true);
-  // })
-
-  res.redirect("/");
+    const p = await col.insertOne(userInputs);
+  } catch {
+    res.redirect("/inputs");
+  } finally {
+    await client.close();
+    console.log("Correctly closed client");
+    res.redirect("/");
+  }
 });
 
-app.get("/trends", (req, res) => {
+async function getUserData(req) {
+  //Retreive user input information
+  await client.connect();
+  const db = client.db(dbName);
+  const col = db.collection("user-inputs");
+  const user = await col.find({ UserId: new ObjectId(req.user._id) }).toArray();
+  const userString = JSON.stringify(user);
+  await client.close();
+  return userString;
+}
+
+app.get("/trends", async (req, res) => {
+  const data = await getUserData(req);
   res.render("trends", {
     title: "Personalized Trends",
+    logout: "Log Out",
+    userMongoDBData: data,
   });
 });
 
-app.get("/suggestions", (req, res) => {
+app.get("/suggestions", async (req, res) => {
+  const data = await getUserData(req);
   res.render("suggestions", {
     title: "Personalized Suggestions",
+    logout: "Log Out",
+    userMongoDBData: data,
   });
 });
 
 app.get("/about", (req, res) => {
   res.render("about", {
     title: "About Powerium",
+    logout: "Log Out",
   });
 });
 
 app.get("/contact", (req, res) => {
   res.render("contact", {
     title: "Help",
+    logout: "Log Out",
   });
 });
 
@@ -183,14 +219,13 @@ app.delete("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-/*
 function checkAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
-      return next();
-    }
-  
-    res.redirect("/login");
+  if (req.isAuthenticated()) {
+    return next();
   }
+
+  res.redirect("/login");
+}
 
 function checkNotAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
@@ -198,18 +233,6 @@ function checkNotAuthenticated(req, res, next) {
   }
   next();
 }
-*/
-
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
-app.use("/api", userRouter);
 
 app.listen(port, () => {
   console.log("Server is up on port " + port);
