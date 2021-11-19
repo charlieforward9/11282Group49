@@ -9,5 +9,5 @@
  7. On the login page, you can either login with the email address: "test@test" and password "test" or you can register with your own email address and password and login 
 
 
- ### To run Powerium on any other system besides your local system:
+ ### To run Powerium on any other system system:
  1. Using your web browser of choice visit **https://poweriumheroku.herokuapp.com** and begin using the application.
