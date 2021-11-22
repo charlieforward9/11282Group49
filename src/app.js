@@ -6,35 +6,26 @@ if (process.env.NODE_ENV !== "production") {
 const path = require("path");
 const express = require("express");
 const hbs = require("hbs");
-const bodyParser = require("body-parser");
-const urlencodedParser = bodyParser.urlencoded({ extended: false });
+const urlencodedParser = express.urlencoded({ extended: false });
 const bcrypt = require("bcrypt");
 const passport = require("passport");
 const flash = require("express-flash");
 const session = require("express-session");
 const methodOverride = require("method-override");
-//New code
-const mongoose = require("mongoose");
-const localStrategy = require("passport-local").Strategy;
 const ObjectId = require("mongodb").ObjectId;
 const { MongoClient } = require("mongodb");
-const uri =
-  "mongodb+srv://smadsen:smadsen@userinformation.mgssl.mongodb.net/UserInformation?retryWrites=true&w=majority";
-
-const initializePassport = require("./passport-config");
-const { assert } = require("console");
-
-initializePassport(passport);
-
 const app = express();
 const port = process.env.PORT || 4000;
+const initializePassport = require("./passport-config");
+const uri =
+  "mongodb+srv://smadsen:smadsen@userinformation.mgssl.mongodb.net/UserInformation?retryWrites=true&w=majority";
+const dbName = "UserInformation";
 
 //Connect to MongoDB
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
-const dbName = "UserInformation";
 
 //Define path for Express config
 const publicDirectoryPath = path.join(__dirname, "../public");
@@ -58,6 +49,7 @@ app.use(
   })
 );
 
+initializePassport(passport);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(methodOverride("_method"));
@@ -119,7 +111,7 @@ app.post(
         password: hashedPassword,
       };
 
-      const p = await col.insertOne(userInfo);
+      await col.insertOne(userInfo);
     } catch {
       res.redirect("/register");
     } finally {
@@ -161,7 +153,7 @@ app.post("/inputs", urlencodedParser, async (req, res) => {
       NumEatingOut: req.body.eatingOutName,
     };
 
-    const p = await col.insertOne(userInputs);
+    await col.insertOne(userInputs);
   } catch {
     res.redirect("/inputs");
   } finally {
